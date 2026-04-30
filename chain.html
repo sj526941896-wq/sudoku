@@ -1,0 +1,789 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>数独链技巧 · 发现之旅</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f172a;--card:#1e293b;--card2:#273449;
+  --primary:#6366f1;--primary-l:#818cf8;
+  --accent:#f59e0b;--accent2:#fcd34d;
+  --teal:#14b8a6;--rose:#f43f5e;--green:#22c55e;
+  --text:#f1f5f9;--muted:#94a3b8;--border:#334155;
+}
+body{
+  font-family:'PingFang SC','Microsoft YaHei','Segoe UI',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;overflow-x:hidden;
+}
+h1,h2,h3{font-weight:700}
+
+/* ==== 顶部标题 ==== */
+.top-bar{
+  display:flex;align-items:center;gap:16px;
+  padding:16px 24px;background:var(--card);
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:50;
+}
+.top-bar h1{
+  font-size:1.3rem;letter-spacing:1px;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.top-bar .subtitle{color:var(--muted);font-size:.8rem;margin-left:auto}
+.home-btn{
+  padding:6px 16px;border:2px solid var(--primary);
+  border-radius:8px;background:transparent;color:var(--primary-l);
+  font-weight:600;cursor:pointer;font-size:.85rem;
+  transition:all .2s;
+}
+.home-btn:hover{background:var(--primary);color:#fff}
+
+/* ==== 布局 ==== */
+.layout{display:flex;min-height:calc(100vh-65px)}
+@media(max-width:900px){.layout{flex-direction:column}}
+
+/* ==== 左侧技巧导航 ==== */
+.sidebar{
+  width:220px;min-width:220px;
+  background:var(--card);border-right:1px solid var(--border);
+  padding:16px 0;overflow-y:auto;
+}
+@media(max-width:900px){.sidebar{width:100%;min-width:unset;border-right:none;border-bottom:1px solid var(--border);max-height:180px}}
+.sidebar-title{
+  padding:0 16px 10px;font-size:.75rem;color:var(--muted);
+  letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);margin-bottom:8px;
+}
+.tech-item{
+  padding:10px 16px;cursor:pointer;
+  border-left:3px solid transparent;
+  transition:all .2s;font-size:.88rem;
+}
+.tech-item:hover{background:var(--card2);border-left-color:var(--primary-l)}
+.tech-item.active{background:var(--card2);border-left-color:var(--primary);color:var(--primary-l)}
+.tech-item .tech-name{font-weight:600}
+.tech-item .tech-desc{font-size:.75rem;color:var(--muted);margin-top:2px}
+
+/* ==== 主内容区 ==== */
+.main{flex:1;padding:20px 24px;max-width:860px;margin:0 auto}
+
+/* ==== 技巧说明卡片 ==== */
+.concept-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:14px;padding:22px;margin-bottom:16px;
+}
+.concept-card h2{font-size:1.15rem;margin-bottom:8px;color:var(--primary-l)}
+.concept-card p{color:var(--muted);font-size:.9rem;line-height:1.8}
+.concept-card .key{color:var(--accent2);font-weight:600}
+
+/* ==== 发现步骤（Step-by-step） ==== */
+.steps-section{margin-bottom:16px}
+.steps-header{
+  display:flex;align-items:center;gap:10px;
+  margin-bottom:10px;
+}
+.steps-header h3{font-size:1rem;color:var(--text)}
+.step-badge{
+  background:var(--primary);color:#fff;
+  border-radius:50%;width:22px;height:22px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:.7rem;font-weight:700;flex-shrink:0;
+}
+.step-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:10px;padding:14px 18px;margin-bottom:8px;
+  display:flex;align-items:flex-start;gap:14px;
+  transition:all .3s;
+}
+.step-card.current{
+  border-color:var(--primary);
+  box-shadow:0 0 0 2px rgba(99,102,241,.25);
+}
+.step-card.done{border-color:var(--green);opacity:.75}
+.step-card .step-icon{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1rem;flex-shrink:0;margin-top:2px;
+}
+.step-card.current .step-icon{background:var(--primary)}
+.step-card.done .step-icon{background:var(--green)}
+.step-content .step-title{font-weight:600;font-size:.9rem;margin-bottom:4px}
+.step-content .step-text{font-size:.85rem;color:var(--muted);line-height:1.7}
+
+/* ==== 棋盘区域 ==== */
+.board-section{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.board-wrap{
+  background:var(--card);border:3px solid #475569;
+  border-radius:10px;padding:12px;flex-shrink:0;
+}
+.board-inner{
+  display:grid;grid-template-columns:repeat(9,46px);
+  grid-template-rows:repeat(9,46px);
+}
+.cell{
+  width:46px;height:46px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1rem;font-weight:700;
+  border-right:1px solid #334155;border-bottom:1px solid #334155;
+  user-select:none;position:relative;cursor:default;
+  transition:background .3s;
+}
+.cell[data-br="1"]{border-right:2.5px solid #64748b}
+.cell[data-bb="1"]{border-bottom:2.5px solid #64748b}
+.cell[data-last-col="1"]{border-right:none}
+.cell[data-last-row="1"]{border-bottom:none}
+.given{color:#e2e8f0}
+.empty{color:transparent}
+.candidate{font-size:.55rem;font-weight:600;display:grid;place-items:center}
+
+/* 高亮颜色 */
+.hl-blue{background:rgba(99,102,241,.25)}
+.hl-yellow{background:rgba(245,158,11,.25)}
+.hl-green{background:rgba(34,197,94,.25)}
+.hl-red{background:rgba(244,63,94,.35)}
+.hl-purple{background:rgba(168,85,247,.25)}
+.hl-orange{background:rgba(249,115,22,.25)}
+.hl-teal{background:rgba(20,184,166,.25)}
+.hl-pink{background:rgba(236,72,153,.2)}
+.hl-triad1{background:rgba(99,102,241,.3)}
+.hl-triad2{background:rgba(20,184,166,.3)}
+.hl-triad3{background:rgba(249,115,22,.3)}
+
+.cell.eliminated .cand{color:#64748b !important;text-decoration:line-through}
+.cand{transition:all .3s}
+
+/* 链动画 */
+.chain-link{animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(99,102,241,.6)}
+  50%{box-shadow:0 0 0 6px rgba(99,102,241,0)}
+}
+
+/* ==== 结论框 ==== */
+.conclusion-box{
+  background:linear-gradient(135deg,#1e293b,#312e81);
+  border:1px solid var(--primary);border-radius:12px;
+  padding:16px 20px;margin-top:12px;
+  font-size:.88rem;line-height:1.8;
+}
+.conclusion-box h4{color:var(--accent2);font-size:.9rem;margin-bottom:6px}
+.conclusion-box .elim{color:#f87171;text-decoration:line-through;margin:0 2px}
+.conclusion-box .keep{color:#86efac}
+
+/* ==== 控制按钮 ==== */
+.controls{
+  display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  margin-top:14px;
+}
+.btn{
+  padding:8px 20px;border:none;border-radius:8px;
+  font-size:.88rem;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-prev{background:var(--card2);color:var(--text);border:2px solid var(--border)}
+.btn-prev:hover{border-color:var(--primary)}
+.btn-next{background:var(--primary);color:#fff}
+.btn-next:hover{background:#4338ca}
+.btn-next:disabled{background:#334155;color:#64748b;cursor:not-allowed}
+.btn-demo{
+  background:linear-gradient(135deg,var(--primary),#7c3aed);
+  color:#fff;border:none;
+}
+.btn-demo:hover{opacity:.88}
+
+/* ==== 图例 ==== */
+.legend{
+  display:flex;gap:12px;flex-wrap:wrap;
+  font-size:.8rem;color:var(--muted);margin-top:12px;
+}
+.legend-item{display:flex;align-items:center;gap:5px}
+.legend-dot{
+  width:14px;height:14px;border-radius:4px;
+}
+
+/* ==== 练习区 ==== */
+.practice-area{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:12px;padding:18px;margin-top:16px;
+}
+.practice-area h3{font-size:1rem;margin-bottom:10px;color:var(--accent)}
+.practice-area p{font-size:.85rem;color:var(--muted);line-height:1.7}
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>🔗 数独链技巧 · 发现之旅</h1>
+  <span class="subtitle">由小龙虾编写 · 交互式链技巧教程</span>
+  <button class="home-btn" onclick="location.href='index.html'">🎮 回到游戏</button>
+</div>
+
+<div class="layout">
+
+  <!-- 左侧技巧目录 -->
+  <div class="sidebar">
+    <div class="sidebar-title">技巧目录</div>
+
+    <div class="tech-item active" onclick="showTech('xwing')">
+      <div class="tech-name">① X-Wing</div>
+      <div class="tech-desc">矩形两行/两列的锁定消除</div>
+    </div>
+    <div class="tech-item" onclick="showTech('swordfish')">
+      <div class="tech-name">② Swordfish</div>
+      <div class="tech-desc">三行三列的鱼形结构</div>
+    </div>
+    <div class="tech-item" onclick="showTech('xywing')">
+      <div class="tech-name">③ XY-Wing</div>
+      <div class="tech-desc">三格联动：扣击第三者</div>
+    </div>
+    <div class="tech-item" onclick="showTech('coloring')">
+      <div class="tech-name">④ Simple Coloring</div>
+      <div class="tech-desc">双色标记：矛盾即排除</div>
+    </div>
+    <div class="tech-item" onclick="showTech('xychain')">
+      <div class="tech-name">⑤ XY-Chain</div>
+      <div class="tech-desc">灵活链：逻辑无限延伸</div>
+    </div>
+    <div class="tech-item" onclick="showTech('als')">
+      <div class="tech-name">⑥ ALS 致死组合</div>
+      <div class="tech-desc">几乎完全格组的致命结构</div>
+    </div>
+
+    <div style="padding:16px;font-size:.78rem;color:var(--muted);line-height:1.7;border-top:1px solid var(--border);margin-top:8px">
+      💡<b style="color:var(--text)">如何发现链？</b><br/>
+      链技巧的核心是：<b>先找候选，再找连接</b>。<br/><br/>
+      1. 找一个<b>只填两个候选</b>的格<br/>
+      2. 看它与哪些格共享候选<br/>
+      3. 沿着候选画"线"<br/>
+      4. 看链的两端是否指向同一格<br/>
+    </div>
+  </div>
+
+  <!-- 主内容 -->
+  <div class="main" id="main">
+
+    <!-- 动态加载技巧内容 -->
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   棋盘渲染
+   ============================================================ */
+let _boardData = [];
+let _highlights = {};
+let _candidates = {};
+let _cellColors = {};
+
+function renderBoard(containerId, data, cands, hl, colors) {
+  // data: 2D array, 0=empty
+  // cands: {[r,c]: Set of nums}
+  // hl: {[r,c]: 'color-name'}
+  // colors: {name: cssClass}
+  _boardData = data;
+  _candidates = cands || {};
+  _highlights = hl || {};
+  _cellColors = colors || {};
+
+  const board = document.getElementById(containerId);
+  board.innerHTML = '';
+  for (let r=0;r<9;r++){
+    for (let c=0;c<9;c++){
+      const cell=document.createElement('div');
+      cell.className='cell';
+      cell.dataset.r=r;cell.dataset.c=c;
+      // 粗边
+      if(c===2||c===5)cell.dataset.br='1';
+      if(r===2||r===5)cell.dataset.bb='1';
+      if(c===8)cell.dataset.lastCol='1';
+      if(r===8)cell.dataset.lastRow='1';
+
+      const val=data[r][c];
+      if(val!==0){
+        cell.textContent=val;
+        cell.classList.add('given');
+      } else {
+        const ns=_candidates[`${r},${c}`];
+        if(ns&&ns.size>0){
+          const grid=document.createElement('div');
+          grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);width:100%;height:100%;padding:2px';
+          for(let n=1;n<=9;n++){
+            const sp=document.createElement('span');
+            sp.className='cand';
+            sp.textContent=ns.has(n)?n:'';
+            sp.dataset.n=n;
+            grid.appendChild(sp);
+          }
+          cell.appendChild(grid);
+          cell.classList.add('candidate');
+        } else {
+          cell.classList.add('empty');
+        }
+      }
+
+      // 高亮
+      const hlKey=`${r},${c}`;
+      if(_highlights[hlKey]){
+        cell.classList.add(_highlights[hlKey]);
+      }
+      if(_cellColors[hlKey]){
+        cell.style.background=cell.style.background+';'+getColorHex(_cellColors[hlKey]);
+      }
+
+      board.appendChild(cell);
+    }
+  }
+}
+
+function updateHighlights(hl) {
+  _highlights=hl||{};
+  for(let r=0;r<9;r++){
+    for(let c=0;c<9;c++){
+      const cell=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+      if(!cell)continue;
+      // 清除旧高亮
+      cell.className=cell.className.split(' ').filter(cl=>
+        !['hl-blue','hl-yellow','hl-green','hl-red','hl-purple',
+          'hl-orange','hl-teal','hl-pink','hl-triad1','hl-triad2','hl-triad3'].includes(cl)
+      ).join(' ');
+      const key=`${r},${c}`;
+      if(_highlights[key])cell.classList.add(_highlights[key]);
+    }
+  }
+}
+
+function markEliminated(cells) {
+  cells.forEach(([r,c])=>{
+    const cell=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    if(!cell)return;
+    const sps=cell.querySelectorAll('.cand');
+    sps.forEach(sp=>{if(sp.textContent)sp.classList.add('eliminated')});
+  });
+}
+
+function flashCells(cells, cls='hl-blue', duration=1200) {
+  cells.forEach(([r,c])=>{
+    const cell=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+    if(cell){cell.classList.add(cls,'chain-link');setTimeout(()=>{cell.classList.remove('chain-link')},duration);}
+  });
+}
+
+function getColorHex(name){
+  const map={'blue':'rgba(99,102,241,.3)','yellow':'rgba(245,158,11,.3)',
+    'green':'rgba(34,197,94,.3)','red':'rgba(244,63,94,.4)',
+    'purple':'rgba(168,85,247,.3)','orange':'rgba(249,115,22,.3)',
+    'teal':'rgba(20,184,166,.3)','pink':'rgba(236,72,153,.25)',
+    'triad1':'rgba(99,102,241,.35)','triad2':'rgba(20,184,166,.35)','triad3':'rgba(249,115,22,.35)'};
+  return map[name]||'rgba(99,102,241,.3)';
+}
+
+/* ============================================================
+   步骤演示系统
+   ============================================================ */
+let _currentStep = 0;
+let _steps = [];
+let _stepCallbacks = [];
+
+function runDemo(steps, callbacks) {
+  _steps = steps;
+  _stepCallbacks = callbacks || [];
+  _currentStep = 0;
+  showStep(0);
+}
+
+function showStep(idx) {
+  if(idx<0||idx>=_steps.length)return;
+  _currentStep=idx;
+  const s=_steps[idx];
+  // 更新步骤卡片高亮
+  document.querySelectorAll('.step-card').forEach((el,i)=>{
+    el.classList.remove('current','done');
+    if(i<idx)el.classList.add('done');
+    if(i===idx)el.classList.add('current');
+  });
+  // 执行回调
+  if(_stepCallbacks[idx]){
+    _stepCallbacks[idx]();
+  }
+  // 更新按钮
+  const prevBtn=document.getElementById('btn-prev');
+  const nextBtn=document.getElementById('btn-next');
+  if(prevBtn)prevBtn.disabled=idx===0;
+  if(nextBtn){
+    nextBtn.disabled=idx===_steps.length-1;
+    nextBtn.textContent=idx===_steps.length-1?'✓ 完成':'下一步 →';
+  }
+}
+
+function nextStep() { if(_currentStep<_steps.length-1) showStep(_currentStep+1); }
+function prevStep() { if(_currentStep>0) showStep(_currentStep-1); }
+
+/* ============================================================
+   技巧数据定义
+   ============================================================ */
+const TECHNIQUES = {
+
+/* ---- ① X-WING ---- */
+xwing: {
+  title:'① X-Wing：矩形锁定消除',
+  concept:`<p>X-Wing是最基础的链技巧。它的核心思想是：<span class="key">如果一个候选数字只在两行的相同两列出现</span>，那么这四个格子恰好构成一个矩形（形似飞机的两对机翼），该数字必须出现在矩形的两个对角格上——因此，这两列的其他位置都可以排除这个候选。</p>
+<p>换句话说：<span class="key">两行 + 两列 = 一个"X"</span>，X的两条对角线就是数字的安身之所，其他位置靠边站。</p>`,
+  howToFind:`<p><b>发现X-Wing的三个条件：</b></p>
+<ol style="font-size:.88rem;color:var(--muted);line-height:2;padding-left:18px">
+  <li>选一个候选数（比如 <b style="color:var(--accent2)">6</b>）</li>
+  <li>找两行，每行中该候选恰好出现在<b>恰好两格</b>，且这两格在同一两列</li>
+  <li>这两行两列交叉形成的4个格，就是X-Wing结构</li>
+</ol>
+<p style="margin-top:8px;font-size:.82rem;color:#94a3b8">💡 小技巧：先在纸上用铅笔标出每个候选数的位置，再找"对齐"的两行。</p>`,
+  board: {
+    given: [[0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0],
+            [0,0,0,8,0,4,0,0,0],
+            [0,0,7,0,0,0,9,0,0],
+            [0,5,0,0,3,0,0,7,0],
+            [0,0,1,0,0,0,6,0,0],
+            [0,0,0,9,0,3,0,0,0],
+            [0,0,0,0,0,0,0,0,0],
+            [0,0,0,0,0,0,0,0,0]],
+    cands: {
+      '0,3':new Set([3,6,9]),'0,4':new Set([2,6,9]),'0,5':new Set([2,3,6,9]),
+      '0,6':new Set([1,2,3,6,9]),'0,7':new Set([1,2,3,9]),'0,8':new Set([1,2,3,9]),
+      '1,0':new Set([2,3,6,9]),'1,1':new Set([2,3,6,9]),'1,2':new Set([2,3,6,9]),
+      '1,4':new Set([2,6,9]),'1,5':new Set([2,3,6,9]),'1,7':new Set([1,2,3,9]),'1,8':new Set([1,2,3,9]),
+      '3,0':new Set([3,4,6]),'3,1':new Set([3,4,6]),'3,3':new Set([1,5,6]),'3,4':new Set([1,5,6,8]),
+      '3,5':new Set([1,2,5,6]),'3,7':new Set([3,4,5]),'3,8':new Set([2,3,4,5]),
+      '4,0':new Set([2,4,6,8,9]),'4,2':new Set([2,4,6,8,9]),'4,3':new Set([1,2,6,8]),
+      '4,4':new Set([1,2,8]),'4,5':new Set([2,5,6,8]),'4,7':new Set([4,8]),
+      '5,0':new Set([2,3,4,8,9]),'5,1':new Set([2,3,4,8,9]),'5,3':new Set([2,3,5,7,8]),
+      '5,4':new Set([1,2,5,7,8,9]),'5,5':new Set([2,5,7,8,9]),'5,7':new Set([3,4,5,8,9]),'5,8':new Set([2,3,4,5,8,9]),
+      '6,0':new Set([1,4,5,6,7,8]),'6,1':new Set([1,4,6,7,8]),'6,2':new Set([4,5,6,7,8]),
+      '6,3':new Set([1,5,6,7]),'6,4':new Set([1,5,6,7,8]),'6,5':new Set([1,2,5,6]),
+      '6,6':new Set([1,2,4,5,7,8]),'6,7':new Set([1,2,4,5,7,8]),'6,8':new Set([1,2,4,5,7,8]),
+      '7,0':new Set([3,4,6,8,9]),'7,1':new Set([3,4,6,8,9]),'7,2':new Set([3,4,5,6,8,9]),
+      '7,3':new Set([1,2,5,6,7,8]),'7,4':new Set([1,2,5,6,7,8]),'7,5':new Set([1,2,5,6,7,8]),
+      '7,6':new Set([1,2,3,4,5,6,7,8,9]),'7,7':new Set([2,3,4,5,6,8,9]),'7,8':new Set([1,2,3,4,5,6,7,8,9]),
+      '8,0':new Set([2,3,4,6,8,9]),'8,1':new Set([2,3,4,6,8,9]),'8,2':new Set([2,3,4,5,6,8,9]),
+      '8,3':new Set([1,2,5,6,7,8]),'8,4':new Set([1,2,5,6,7,8]),'8,5':new Set([1,2,5,6,7,8]),
+      '8,6':new Set([1,2,4,5,7,8,9]),'8,7':new Set([1,2,3,4,5,7,8,9]),'8,8':new Set([1,2,3,4,5,7,8,9]),
+      // 关键6的位置：第1列和第5列
+      '0,3':new Set([3,6]),'0,4':new Set([2,6]),
+      '1,3':new Set([3,6]),'1,4':new Set([2,6]),
+    },
+  },
+  steps: [
+    {
+      title:'锁定候选数 6',
+      text:'X-Wing的第一步：选一个候选数。这里我们选择 <b style="color:var(--accent2)">6</b> 作为目标。',
+      hl: {},
+      cb: ()=>{
+        // 先展示全局6的位置
+        const all6={};
+        const bd=document.getElementById('board-inner');
+        if(!bd)return;
+        document.querySelectorAll('[data-r]').forEach(el=>{
+          const r=parseInt(el.dataset.r),c=parseInt(el.dataset.c);
+          const sp=el.querySelector(`.cand[data-n="6"]`);
+          if(sp&&sp.textContent==='6'){
+            el.classList.add('hl-yellow');all6[`${r},${c}`]=true;
+          }
+        });
+      }
+    },
+    {
+      title:'发现第1行只有候选6在列3和列4',
+      text:'看第1行（黄色高亮）：候选6只出现在 <b>r1c4</b> 和 <b>r1c4</b>？不对——实际上是第1行（数组第0行）的候选6出现在列3和列4。仔细看：r1c4(6) 和 r1c4(6)——我们来重新数：第1行（索引0）的候选6在 c3 和 c4 两个位置。',
+      hl: {'0,3':'hl-yellow','0,4':'hl-yellow'},
+      cb: ()=>{
+        // 高亮第1行两个候选6
+        ['0,3','0,4'].forEach(k=>{
+          const [r,c]=k.split(',').map(Number);
+          const el=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+          if(el)el.classList.add('hl-yellow','chain-link');
+        });
+      }
+    },
+    {
+      title:'发现第4行也只有候选6在列3和列4',
+      text:'看第4行（蓝色高亮）：候选6同样只出现在列3和列4！现在我们有了两行 + 两列：<b>行1、行4</b> × <b>列3、列4</b>，构成了X-Wing的矩形结构。',
+      hl: {'0,3':'hl-yellow','0,4':'hl-yellow','3,3':'hl-blue','3,4':'hl-blue'},
+      cb: ()=>{
+        // 清除旧的，加新的
+        document.querySelectorAll('[data-r]').forEach(el=>{
+          el.classList.remove('hl-yellow','hl-blue','chain-link');
+        });
+        ['0,3','0,4','3,3','3,4'].forEach(k=>{
+          const [r,c]=k.split(',').map(Number);
+          const el=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+          if(el){el.classList.add(k.startsWith('0')?'hl-yellow':'hl-blue');el.classList.add('chain-link');}
+        });
+      }
+    },
+    {
+      title:'绘制X形对角线',
+      text:'4个候选6构成矩形。数字6必须出现在两个<b>对角</b>位置：<br>• 要么在 (行1,列3) + (行4,列4)<br>• 要么在 (行1,列4) + (行4,列3)<br><b>无论哪种情况，列3和列4的底部（第8行）都会被这4格覆盖！</b>',
+      hl: {'0,3':'hl-yellow','0,4':'hl-yellow','3,3':'hl-blue','3,4':'hl-blue','8,3':'hl-red','8,4':'hl-red'},
+      cb: ()=>{
+        document.querySelectorAll('[data-r]').forEach(el=>{
+          el.classList.remove('hl-yellow','hl-blue','hl-red','chain-link');
+        });
+        ['0,3','0,4','3,3','3,4','8,3','8,4'].forEach(k=>{
+          const [r,c]=k.split(',').map(Number);
+          const el=document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+          if(el){
+            if(k==='8,3'||k==='8,4'){el.classList.add('hl-red','chain-link');}
+            else if(k.startsWith('0')){el.classList.add('hl-yellow','chain-link');}
+            else{el.classList.add('hl-blue','chain-link');}
+          }
+        });
+      }
+    },
+    {
+      title:'消除：列3和列8行的候选6',
+      text:'由于列3和列4必须由矩形对角来填满，第8行（索引7）的列3和列4的候选6就可以排除——因为列3和列4的第8行无论如何都轮不到它们了！',
+      hl: {'0,3':'hl-yellow','0,4':'hl-yellow','3,3':'hl-blue','3,4':'hl-blue','7,3':'hl-red','7,4':'hl-red'},
+      elim: [['7,3','6'],['7,4','6']],
+      conclusion: `<h4>✂️ X-Wing 消除结果</h4>在第8行（r8）的列3和列4位置，候选 <b style="color:#f87171;text-decoration:line-through">6</b> 被消除。<br/><br/>这就是X-Wing的威力：<b>不用看具体填什么，只需知道"它一定在这4个格里"</b>，就能做排除。`
+    }
+  ],
+  legend: [
+    {color:'hl-yellow',label:'X-Wing行1的候选6'},
+    {color:'hl-blue',label:'X-Wing行4的候选6'},
+    {color:'hl-red',label:'被消除的候选'},
+  ]
+},
+
+/* ---- ② SWORDFISH ---- */
+swordfish: {
+  title:'② Swordfish：三阶鱼形',
+  concept:`<p>Swordfish是X-Wing的升级版：<span class="key">不是两行两列，而是三行三列</span>。当一个候选数在恰好三行的各自两格中出现，而这些格的列恰好重合为三列，就构成了Swordfish（剑鱼）。</p>
+<p>原理相同：数字一定会出现在这3×3的九个格子里形成一条"鱼形"，因此这三条列的其他位置可以排除该候选。</p>`,
+  howToFind:`<ol style="font-size:.88rem;color:var(--muted);line-height:2;padding-left:18px">
+  <li>选择候选数 N</li>
+  <li>找<b>三行</b>，每行中N恰好出现在恰好两或三格</li>
+  <li>这些格的列位置恰好只有三列，且每列至少两格</li>
+  <li>检查：如果N出现在第1、3、7行，且都在列2、4、8上→找到Swordfish了</li>
+</ol>`,
+  board: {given:[[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,8,0,4,0,0,0,0],[0,0,7,0,0,0,9,0,0],[0,5,0,0,3,0,0,7,0],[0,0,1,0,0,0,6,0,0],[0,0,0,9,0,3,0,0,0],[0,0,0,0,0,0,0,0,0],[0,0,0,0,0,0,0,0,0]],cands:{}},
+  steps:[
+    {title:'找到候选8的三行分布',text:'Swordfish针对候选8：在第2、4、6行（索引1、3、5），8分别只出现在两格，而这六格的列恰好重合为三列（c2、c4、c8）。',hl:{}},
+    {title:'锁定列2、列4、列8',text:'三行 × 三列 = 剑鱼结构！8必须出现在每列的两格之一，因此这三列的其余位置都可以排除8。',hl:{}},
+    {title:'消除结论',text:'第1、3、5行（索引0、2、4）的列2、4、8位置，候选8全部消除。Swordfish完成！',hl:{},elim:[]}
+  ]
+},
+
+/* ---- ③ XY-WING ---- */
+xywing: {
+  title:'③ XY-Wing：三格联动扣击第三者',
+  concept:`<p>XY-Wing是"翼"类技巧的入门。它由三个格组成，每个格都<b>恰好包含两个候选</b>（双值格）。</p>
+<p><span class="key">结构：A（XY）和 B（XZ）同行/列/宫；C（YZ）和 A同行/列/宫</span>，则 C 所在位置的其他 Z 候选被消除。</p>
+<p>因为如果 A 填 X，B 和 C 都得填 Z——Z 和 Z 不能同宫（九宫格规则），所以 C 位置不可能是 Z。</p>`,
+  howToFind:`<ol style="font-size:.88rem;color:var(--muted);line-height:2;padding-left:18px">
+  <li>找一个<b>双值格</b>（XY）作为"枢纽"</li>
+  <li>找与它共享行/列/宫的两个双值格：<b>一个含XZ，一个含YZ</b></li>
+  <li>枢纽格的候选 X 必须填在两翼之一，从而迫使第三格的 Y 不存在→消除 Z</li>
+</ol>`,
+  board: {given:[[5,1,3,6,8,7,4,9,2],[6,8,2,1,9,4,3,9,5],[9,7,4,3,2,5,6,1,8],[1,3,5,4,6,8,2,7,9],[4,9,6,2,7,1,8,3,5],[2,7,8,5,3,9,1,4,6],[8,2,1,9,4,6,7,5,3],[7,4,9,8,5,3,2,6,1],[3,6,7,2,1,7,9,8,4]],cands:{}},
+  steps:[
+    {title:'找到枢纽格 r4c5=(3,7)',text:'格(第4行第5列)有两个候选：3和7，记为 XY=(3,7)。这是我们的枢纽。',hl:{'4,4':'hl-yellow'}},
+    {title:'找到第一翼 r4c2=(3,5)',text:'同行的格(第4行第2列)有候选(3,5)，含X=3和Z=5。记为 XZ=(3,5)。',hl:{'4,4':'hl-yellow','4,1':'hl-blue'}},
+    {title:'找到第二翼 r1c4=(7,5)',text:'同列的格(第1行第4列)有候选(7,5)，含Y=7和Z=5。记为 YZ=(7,5)。',hl:{'4,4':'hl-yellow','4,1':'hl-blue','0,3':'hl-teal'}},
+    {title:'链式推理',text:'如果A填3→B填5→C的5与C的7冲突。<br/>如果A填7→C填5→B的5与B的3冲突。<br/><b>无论哪种情况，第9列的候选5都无法存在！</b>',hl:{'4,4':'hl-yellow','4,1':'hl-blue','0,3':'hl-teal','2,8':'hl-red'}},
+    {title:'消除结论',text:'第3行第9列（r3c9）的候选5被消除。因为无论A填3还是填7，r3c9的5都会被矛盾。',hl:{'4,4':'hl-yellow','4,1':'hl-blue','0,3':'hl-teal','2,8':'hl-red'},elim:[['2,8','5']]}
+  ]
+},
+
+/* ---- ④ SIMPLE COLORING ---- */
+coloring: {
+  title:'④ Simple Coloring：双色标记链',
+  concept:`<p>Simple Coloring（单数链）利用了链的<b>奇偶交替</b>特性：如果一个候选数形成一个链，每个格非A即B（链上相邻格不同色），那么：</p>
+<p>• 如果链两端指向<b>同一格</b>，该格内此候选被消除（因为奇偶矛盾）<br/>
+• 如果链两端是<b>同宫同行同列</b>，该候选被消除</p>
+<p><span class="key">核心洞察：链上颜色交替，如同电路开关，一开一关——奇数步和偶数步永远对立。</span></p>`,
+  howToFind:`<ol style="font-size:.88rem;color:var(--muted);line-height:2;padding-left:18px">
+  <li>选候选数 N</li>
+  <li>用两种颜色（绿/紫）标记所有含N的格，相邻格不同色</li>
+  <li>如果一条链形成闭合环（颜色回到起点）→ <b>双色致命结构</b></li>
+  <li>如果同色格在同行/列/宫 → <b>该颜色全为假</b></li>
+</ol>`,
+  board: {given:[[5,1,3,6,8,7,4,9,2],[6,8,2,1,9,4,3,9,5],[9,7,4,3,2,5,6,1,8],[1,3,5,4,6,8,2,7,9],[4,9,6,2,7,1,8,3,5],[2,7,8,5,3,9,1,4,6],[8,2,1,9,4,6,7,5,3],[7,4,9,8,5,3,2,6,1],[3,6,7,2,1,7,9,8,4]],cands:{}},
+  steps:[
+    {title:'标记候选1的位置',text:'我们在第5列（c4）寻找候选1。标记出所有含候选1的格，开始建立颜色链。',hl:{'1,4':'hl-yellow','3,8':'hl-purple','5,4':'hl-yellow','7,3':'hl-purple'}},
+    {title:'建立颜色链',text:'用绿/紫交替标记：r2c5(1)→绿，r4c9(1)→紫，r6c5(1)→绿，r8c4(1)→紫。',hl:{'1,4':'hl-yellow','3,8':'hl-purple','5,4':'hl-yellow','7,3':'hl-purple'}},
+    {title:'检查矛盾',text:'紫色格 r2c5 和 r8c4 同在第5列！一列不能同时有两个1→紫色全为假！',hl:{'1,4':'hl-red','7,3':'hl-red'}},
+    {title:'消除结论',text:'紫色格 r2c5 和 r8c4 的候选1被消除。数独继续推进！',hl:{'1,4':'hl-red','7,3':'hl-red'},elim:[['1,4','1'],['7,3','1']]}
+  ]
+},
+
+/* ---- ⑤ XY-CHAIN ---- */
+xychain: {
+  title:'⑤ XY-Chain：逻辑链的无限延伸',
+  concept:`<p>XY-Chain是最灵活的链技巧：<span class="key">从起点出发，沿着双值格，每一步都共享一个候选</span>，最终到达目标格，消除其候选。</p>
+<p>链的每一格都是双值格 (A,B)→(B,C)→(C,D)→...→(?,Z)。如果起点和终点同在有效范围，则终点的Z候选被消除。</p>
+<p><b>XY-Chain的力量在于：它不需要闭合环，任意一条有头有尾的链都能做推理。</b></p>`,
+  howToFind:`<ol style="font-size:.88rem;color:var(--muted);line-height:2;padding-left:18px">
+  <li>找一个双值格作为<b>起点</b></li>
+  <li>找下一个双值格与当前格共享一个候选</li>
+  <li>不断延伸，直到找到<b>与起点同区（同行/列/宫）的格</b></li>
+  <li>检查链末端格的"断开候选"能否消除</li>
+</ol>`,
+  board: {given:[[5,1,3,6,8,7,4,9,2],[6,8,2,1,9,4,3,9,5],[9,7,4,3,2,5,6,1,8],[1,3,5,4,6,8,2,7,9],[4,9,6,2,7,1,8,3,5],[2,7,8,5,3,9,1,4,6],[8,2,1,9,4,6,7,5,3],[7,4,9,8,5,3,2,6,1],[3,6,7,2,1,7,9,8,4]],cands:{}},
+  steps:[
+    {title:'找到起点格 r2c3=(2,3)',text:'以候选2在格(第2行第3列)作为XY-Chain的起点，记为(2,3)。',hl:{'1,2':'hl-yellow'}},
+    {title:'连接到 r1c3=(2,6)',text:'共享候选2：r2c3(2,3) → r1c3(2,6)，链延伸至(2,6)。',hl:{'1,2':'hl-yellow','0,2':'hl-blue'}},
+    {title:'连接到 r1c5=(6,8)',text:'共享候选6：r1c3(2,6) → r1c5(6,8)，链延伸至(6,8)。',hl:{'0,2':'hl-blue','0,4':'hl-teal'}},
+    {title:'连接到 r4c4=(7,8)',text:'共享候选8：r1c5(6,8) → r4c4(7,8)，链延伸至(7,8)。',hl:{'0,4':'hl-teal','3,3':'hl-orange'}},
+    {title:'终点发现',text:'r4c4(7,8)与起点r2c3(2,3)在同一宫（第1宫）！如果r2c3填2，则链终点r4c4必须填8，而同宫已有其他8→矛盾！<br/><b>因此r2c3的候选2被排除。</b>',hl:{'1,2':'hl-yellow','0,2':'hl-blue','0,4':'hl-teal','3,3':'hl-orange'},elim:[['1,2','2']]}
+  ]
+},
+
+/* ---- ⑥ ALS ---- */
+als: {
+  title:'⑥ ALS 致死组合',
+  concept:`<p>Almost Locked Set（几乎锁定集）是数独推理中最强大的技巧之一。</p>
+<p><span class="key">ALS定义：一组格（通常2~4个），它们的所有候选数恰好比格数多1个。</span>例如：3个格共有4个候选。</p>
+<p>如果两个ALS共享一个候选，且这个共享候选在两个ALS中都只能填在共享格……那么其他位置的该候选被消除。</p>`,
+  howToFind:`<ol style="font-size:.88rem;color:var(--muted);line-height:2;padding-left:18px">
+  <li>找一个<b>ALS</b>：如3格4候选</li>
+  <li>找另一个ALS与它共享一个候选</li>
+  <li>如果共享候选在两个ALS中都只能出现在交叉格</li>
+  <li>→ 交叉格以外的共享候选全部消除</li>
+</ol>`,
+  board: {given:[[5,1,3,6,8,7,4,9,2],[6,8,2,1,9,4,3,9,5],[9,7,4,3,2,5,6,1,8],[1,3,5,4,6,8,2,7,9],[4,9,6,2,7,1,8,3,5],[2,7,8,5,3,9,1,4,6],[8,2,1,9,4,6,7,5,3],[7,4,9,8,5,3,2,6,1],[3,6,7,2,1,7,9,8,4]],cands:{}},
+  steps:[
+    {title:'找到ALS A：r2c1、r2c3、r2c4',text:'三个格共有候选 {2,4,7,9}（4个候选），构成ALS A。',hl:{'1,0':'hl-yellow','1,2':'hl-yellow','1,3':'hl-yellow'}},
+    {title:'找到ALS B：r3c5、r3c9',text:'两个格共有候选 {7,9}，构成ALS B。',hl:{'2,4':'hl-blue','2,8':'hl-blue'}},
+    {title:'共享候选 9',text:'ALS A和ALS B共享候选9。9在ALS A中只能出现在r2c1或r2c4，在ALS B中只能出现在r3c9。',hl:{'1,0':'hl-yellow','1,3':'hl-yellow','2,8':'hl-blue'}},
+    {title:'结论',text:'无论9填在哪里，r3c9和r2c1的候选9无法同时成立，因此r3c9的候选9被排除。',hl:{'1,0':'hl-yellow','1,3':'hl-yellow','2,8':'hl-blue'},elim:[['2,8','9']]}
+  ]
+}
+
+};
+
+/* ============================================================
+   显示技巧
+   ============================================================ */
+function showTech(techId) {
+  // 更新侧边栏高亮
+  document.querySelectorAll('.tech-item').forEach(el=>el.classList.remove('active'));
+  document.querySelector(`.tech-item[onclick="showTech('${techId}')"]`).classList.add('active');
+
+  const tech = TECHNIQUES[techId];
+  if (!tech) return;
+
+  const main = document.getElementById('main');
+
+  // 生成步骤HTML
+  const stepsHtml = tech.steps.map((s,i) => `
+    <div class="step-card" id="step-${i}">
+      <div class="step-icon">${i+1}</div>
+      <div class="step-content">
+        <div class="step-title">${s.title}</div>
+        <div class="step-text">${s.text}</div>
+        ${s.elim ? `<div style="margin-top:6px;font-size:.82rem;color:#86efac">✂️ 消除候选：${s.elim.map(([k,n])=>`${k.replace(',','行')+','+n}列候选${n}`).join('；')}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+
+  // 生成图例
+  const legendHtml = tech.legend ? `
+    <div class="legend">
+      ${tech.legend.map(l=>`<div class="legend-item"><div class="legend-dot ${l.color}"></div>${l.label}</div>`).join('')}
+    </div>` : '';
+
+  main.innerHTML = `
+    <div class="concept-card">
+      <h2>${tech.title}</h2>
+      <p>${tech.concept}</p>
+    </div>
+
+    <div class="concept-card" style="background:var(--card2)">
+      <h2 style="color:var(--accent)">🔍 如何发现？</h2>
+      ${tech.howToFind}
+    </div>
+
+    <div class="board-section">
+      <div class="board-wrap">
+        <div class="board-inner" id="board-inner"></div>
+      </div>
+      <div style="flex:1;min-width:260px">
+        <div class="steps-section">
+          <div class="steps-header">
+            <div class="step-badge">▶</div>
+            <h3>逐步演示</h3>
+          </div>
+          ${stepsHtml}
+        </div>
+      </div>
+    </div>
+
+    ${legendHtml}
+
+    <div class="controls">
+      <button class="btn btn-prev" id="btn-prev" onclick="prevStep()" disabled>← 上一步</button>
+      <button class="btn btn-next btn-demo" id="btn-next" onclick="nextStep()">下一步 →</button>
+    </div>
+
+    <div class="conclusion-box" id="conclusion-box" style="display:none"></div>
+  `;
+
+  // 初始化棋盘
+  const bd = tech.board;
+  const given = bd.given || [];
+  const cands = bd.cands || {};
+  renderBoard('board-inner', given, cands, {}, {});
+
+  // 初始化演示
+  _steps = tech.steps;
+  _stepCallbacks = tech.steps.map((s,i) => {
+    return () => {
+      // 高亮更新
+      const hl = s.hl || {};
+      updateHighlights({});
+      for(const [key, cls] of Object.entries(hl)){
+        const [r,c] = key.split(',').map(Number);
+        const el = document.querySelector(`[data-r="${r}"][data-c="${c}"]`);
+        if(el) el.classList.add(cls);
+      }
+      // 消除
+      if(s.elim) markEliminated(s.elim.map(([k])=>k.split(',').map(Number)));
+      // 结论
+      const cb = document.getElementById('conclusion-box');
+      if(s.conclusion){
+        cb.innerHTML = s.conclusion;
+        cb.style.display='block';
+      } else {
+        cb.style.display='none';
+      }
+      // 链动画
+      if(s.hl && Object.keys(s.hl).length>0){
+        const cells = Object.keys(s.hl).map(k=>k.split(',').map(Number));
+        const cls = Object.values(s.hl)[0];
+        flashCells(cells, cls, 1000);
+      }
+      // 滚动到步骤
+      const stepEl = document.getElementById(`step-${i}`);
+      if(stepEl){
+        stepEl.scrollIntoView({behavior:'smooth',block:'nearest'});
+      }
+    };
+  });
+
+  // 显示第一步
+  showStep(0);
+}
+
+// 键盘快捷键
+document.addEventListener('keydown', e=>{
+  if(e.key==='ArrowRight'||e.key===' ')nextStep();
+  if(e.key==='ArrowLeft')prevStep();
+});
+
+/* ============================================================
+   启动：默认显示X-Wing
+   ============================================================ */
+showTech('xwing');
+</script>
+</body>
+</html>
