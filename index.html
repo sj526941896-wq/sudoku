@@ -111,14 +111,31 @@ h1{
 .actions-row{
   display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap;
 }
-.actions button{
+/* Base button */
+.actions-row button{
   padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius);
   background:var(--card);font-size:13px;color:var(--text-sec);cursor:pointer;
-  transition:all .15s;display:flex;align-items:center;gap:4px;
+  transition:all .2s;display:flex;align-items:center;gap:5px;
 }
-.actions button:hover{border-color:var(--accent);color:var(--accent)}
-.actions button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.actions button svg{width:16px;height:16px}
+/* Trigger button (one-click action) */
+.actions-row button.trigger:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
+.actions-row button.trigger:active{transform:scale(.95)}
+
+/* Toggle button (on/off switch) */
+.actions-row button.toggle{
+  border-radius:20px;padding:8px 14px;position:relative;
+}
+.actions-row button.toggle .dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--border-thick);transition:all .2s;
+}
+.actions-row button.toggle:hover .dot{background:var(--accent)}
+.actions-row button.toggle.on{
+  background:var(--accent);color:#fff;border-color:var(--accent);
+  box-shadow:0 2px 8px rgba(79,110,247,.3);
+}
+.actions-row button.toggle.on .dot{background:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.3)}
+.actions-row button svg{width:15px;height:15px}
 
 /* Win overlay */
 .overlay{
@@ -174,35 +191,41 @@ h1{
 <div class="numpad" id="numpad"></div>
 
 <div class="actions-row">
-  <button id="btn-note" onclick="toggleNote()">
+  <button class="toggle" id="btn-note" onclick="toggleNote()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-    笔记
+    <span id="note-label">填数</span>
+    <span class="dot"></span>
   </button>
-  <button onclick="eraseCell()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
-    擦除
-  </button>
-  <button onclick="undoMove()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
-    撤销
-  </button>
-  <button onclick="giveHint()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>
-    提示
+  <button class="toggle" id="btn-xy" onclick="toggleXY()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg>
+    XY
+    <span class="dot"></span>
   </button>
 </div>
 <div class="actions-row">
-  <button onclick="markAll()">
+  <button class="trigger" onclick="eraseCell()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+    擦除
+  </button>
+  <button class="trigger" onclick="undoMove()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+    撤销
+  </button>
+  <button class="trigger" onclick="giveHint()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18h6"/><path d="M10 22h4"/><path d="M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z"/></svg>
+    提示
+  </button>
+  <button class="trigger" onclick="copyBoard()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+    复制
+  </button>
+  <button class="trigger" onclick="markAll()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
     全部标注
   </button>
-  <button onclick="fillUnique()">
+  <button class="trigger" onclick="fillUnique()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z"/></svg>
     唯一
-  </button>
-  <button id="btn-xy" onclick="toggleXY()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="12" r="5"/><circle cx="15" cy="12" r="5"/></svg>
-    XY
   </button>
 </div>
 
@@ -275,8 +298,9 @@ function newGame(diff){
   notes=Array.from({length:9},()=>Array.from({length:9},()=>new Set()));
   selected=null;noteMode=false;xyMode=false;errorCount=0;seconds=0;history=[];
 
-  document.getElementById('btn-note').classList.remove('active');
-  document.getElementById('btn-xy').classList.remove('active');
+  document.getElementById('btn-note').classList.remove('on');
+  document.getElementById('btn-xy').classList.remove('on');
+  document.getElementById('note-label').textContent='填数';
   document.getElementById('errors').textContent='0/'+maxErrors;
   updateTimer();
   clearInterval(timerInterval);
@@ -352,7 +376,7 @@ function highlightCells(){
 
 function selectCell(r,c){
   selected=[r,c];
-  noteMode&&document.getElementById('btn-note').classList.add('active');
+  noteMode&&document.getElementById('btn-note').classList.add('on');
   highlightCells();
 }
 
@@ -412,12 +436,13 @@ function undoMove(){
 
 function toggleNote(){
   noteMode=!noteMode;
-  document.getElementById('btn-note').classList.toggle('active',noteMode);
+  document.getElementById('btn-note').classList.toggle('on',noteMode);
+  document.getElementById('note-label').textContent=noteMode?'笔记':'填数';
 }
 
 function toggleXY(){
   xyMode=!xyMode;
-  document.getElementById('btn-xy').classList.toggle('active',xyMode);
+  document.getElementById('btn-xy').classList.toggle('on',xyMode);
   highlightCells();
 }
 
@@ -461,6 +486,16 @@ function giveHint(){
   board[r][c]=solution[r][c];notes[r][c].clear();
   given[r][c]=true; // mark as given so can't change
   renderBoard();renderNumpad();checkWin();
+}
+
+function copyBoard(){
+  const text=board.map(r=>r.map(v=>v===0?'.':v).join(' ')).join('\n');
+  navigator.clipboard.writeText(text).then(()=>{
+    const btn=event.currentTarget;
+    const orig=btn.innerHTML;
+    btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15" height="15"><polyline points="20 6 9 17 4 12"/></svg> 已复制';
+    setTimeout(()=>btn.innerHTML=orig,1500);
+  });
 }
 
 function renderNumpad(){
